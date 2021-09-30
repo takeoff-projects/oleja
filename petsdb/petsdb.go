@@ -1,7 +1,6 @@
 package petsdb
 
 import (
-	
 	"context"
 	"fmt"
 	"log"
@@ -9,6 +8,7 @@ import (
 	"time"
 
 	"cloud.google.com/go/datastore"
+	"github.com/google/uuid"
 )
 
 var projectID string
@@ -22,7 +22,7 @@ type Pet struct {
 	Likes   int       `datastore:"likes"`
 	Owner   string    `datastore:"owner"`
 	Petname string    `datastore:"petname"`
-	Name    string     // The ID used in the datastore.
+	Name    string    // The ID used in the datastore.
 }
 
 // GetPets Returns all pets from datastore ordered by likes in Desc Order
@@ -55,4 +55,27 @@ func GetPets() ([]Pet, error) {
 
 	client.Close()
 	return pets, nil
+}
+
+func AddPet(pet Pet) {
+	// ...
+	projectID = os.Getenv("GOOGLE_CLOUD_PROJECT")
+	if projectID == "" {
+		log.Fatal(`You need to set the environment variable "GOOGLE_CLOUD_PROJECT"`)
+	}
+	ctx := context.Background()
+	client, err := datastore.NewClient(ctx, projectID)
+	id := uuid.New()
+	if err != nil {
+		log.Fatalf("Could not create datastore client: %v", err)
+	}
+
+	k := datastore.NameKey("Pet", "Pet"+id.String(), nil)
+	_, err = client.Put(ctx, k, &pet)
+	if err != nil {
+		fmt.Println(err)
+	}
+
+	log.Println("Pet added:", pet)
+	client.Close()
 }
